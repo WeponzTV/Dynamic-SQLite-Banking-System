@@ -632,32 +632,24 @@ stock UnloadBanks()
 
 stock LoadPlayerAccount(playerid)
 {
-	new query[256], field[64];
-	for(new i = 0; i < MAX_BANKS; i++)
-	{
-	    format(query, sizeof(query), "SELECT * FROM `ACCOUNTS` WHERE `NAME` = '%s'", DB_Escape(GetName(playerid)));
-    	database_result = db_query(bank_database, query);
-    	if(db_num_rows(database_result))
-    	{
-			db_get_field_assoc(database_result, "BALANCE", field, sizeof(field));
-          	AccountData[playerid][account_balance] = strval(field);
-          	
-			db_get_field_assoc(database_result, "DEBT", field, sizeof(field));
-          	AccountData[playerid][account_debt] = strval(field);
-          	
-    		AccountData[playerid][account_editing] = -1;
-          	
-    		db_free_result(database_result);
-    	}
-    	else
-    	{
-    		db_free_result(database_result);
-    		
-    	    format(query, sizeof(query), "INSERT INTO `ACCOUNTS` (`NAME`, `BALANCE`, `DEBT`) VALUES ('%s', '0', '0')", DB_Escape(GetName(playerid)));
-			database_result = db_query(bank_database, query);
-			db_free_result(database_result);
-    	}
-	}
+	new query[64 + MAX_PLAYER_NAME]; // does not need to be 256 characters long...
+
+    format(query, sizeof(query), "SELECT * FROM `ACCOUNTS` WHERE `NAME` = '%q'", GetName(playerid)); // we dont need DB_Escape when we have %q as a format specifier.
+    new DBResult:res = db_query(db, query);
+
+    if(db_num_rows(res))
+    {
+        AccountData[playerid][account_balance] =  db_get_field_assoc_int(res, "BALANCE");
+        AccountData[playerid][account_debt] = db_get_field_assoc_int(res, "DEBT");
+        AccountData[playerid][account_editing] = -1;
+    }
+    else
+    {
+        format(query, sizeof(query), "INSERT INTO `ACCOUNTS` (`NAME`, `BALANCE`, `DEBT`) VALUES ('%q', '0', '0')", GetName(playerid));
+        db_free_result(db_query(db, query));
+    }
+
+    db_free_result(res); // Regardless of the outcome of either control statement, we must free the result.
 	return 1;
 }
 
