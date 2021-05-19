@@ -471,32 +471,6 @@ stock IsNumeric(const string[])
     return 1;
 }
 
-stock DB_Escape(text[])
-{
-    new ret[80 * 2], ch, i, j;
-    while ((ch = text[i++]) && j < sizeof (ret))
-    {
-        if (ch == '\'')
-        {
-            if (j < sizeof (ret) - 2)
-            {
-                ret[j++] = '\'';
-                ret[j++] = '\'';
-            }
-        }
-        else if (j < sizeof (ret))
-        {
-            ret[j++] = ch;
-        }
-        else
-        {
-            j++;
-        }
-    }
-    ret[sizeof (ret) - 1] = '\0';
-    return ret;
-}
-
 stock GetXYBehindPlayer(playerid, &Float:x, &Float:y, Float:distance)
 {
 	new Float:a;
@@ -635,7 +609,7 @@ stock LoadPlayerAccount(playerid)
 	new query[256], field[64];
 	for(new i = 0; i < MAX_BANKS; i++)
 	{
-	    format(query, sizeof(query), "SELECT * FROM `ACCOUNTS` WHERE `NAME` = '%s'", DB_Escape(GetName(playerid)));
+	    format(query, sizeof(query), "SELECT * FROM `ACCOUNTS` WHERE `NAME` = '%q'", GetName(playerid));
     	database_result = db_query(bank_database, query);
     	if(db_num_rows(database_result))
     	{
@@ -653,7 +627,7 @@ stock LoadPlayerAccount(playerid)
     	{
     		db_free_result(database_result);
     		
-    	    format(query, sizeof(query), "INSERT INTO `ACCOUNTS` (`NAME`, `BALANCE`, `DEBT`) VALUES ('%s', '0', '0')", DB_Escape(GetName(playerid)));
+    	    format(query, sizeof(query), "INSERT INTO `ACCOUNTS` (`NAME`, `BALANCE`, `DEBT`) VALUES ('%q', '0', '0')", GetName(playerid));
 			database_result = db_query(bank_database, query);
 			db_free_result(database_result);
     	}
@@ -664,7 +638,7 @@ stock LoadPlayerAccount(playerid)
 stock SavePlayerAccount(playerid)
 {
 	new query[128];
-	format(query, sizeof(query), "UPDATE `ACCOUNTS` SET `BALANCE` = '%d', `DEBT` = '%d' WHERE `NAME` = '%s' COLLATE NOCASE", AccountData[playerid][account_balance], AccountData[playerid][account_debt], DB_Escape(GetName(playerid)));
+	format(query, sizeof(query), "UPDATE `ACCOUNTS` SET `BALANCE` = '%d', `DEBT` = '%d' WHERE `NAME` = '%q' COLLATE NOCASE", AccountData[playerid][account_balance], AccountData[playerid][account_debt], GetName(playerid));
 	database_result = db_query(bank_database, query);
 	db_free_result(database_result);
 	return 1;
@@ -773,7 +747,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 
 			UpdateDynamic3DTextLabelText(BankData[bankid][bank_label], SERVER, BankData[bankid][bank_name]);
 	        
-	        format(query, sizeof(query), "UPDATE `BANKS` SET `NAME` = '%s' WHERE `ID` = '%d' COLLATE NOCASE", DB_Escape(BankData[bankid][bank_name]), bankid);
+	        format(query, sizeof(query), "UPDATE `BANKS` SET `NAME` = '%q' WHERE `ID` = '%d' COLLATE NOCASE", BankData[bankid][bank_name], bankid);
 			database_result = db_query(bank_database, query);
 			db_free_result(database_result);
 	        
@@ -1134,7 +1108,7 @@ CMD:editbank(playerid, params[])
 		format(string, sizeof(string), "{FFFFFF}Change Name: %s\nToggle Loans: Disabled", BankData[bankid][bank_name]);
 	}
 
-    AccountData[playerid][account_editing] = bankid;
+	AccountData[playerid][account_editing] = bankid;
 
 	ShowPlayerDialog(playerid, BANK_EDIT_DIALOG, DIALOG_STYLE_LIST, "{FFFFFF}Bank Settings", string, "Edit", "Cancel");
 	return 1;
